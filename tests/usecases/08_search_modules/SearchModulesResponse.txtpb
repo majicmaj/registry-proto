@@ -1,0 +1,20 @@
+# A response ranking the matching Modules.
+matches: {
+  module: {
+    id: "b1946ac92492d2347c6235b4d2611184"
+    create_time: {
+      seconds: 1704067200
+    }
+    update_time: {
+      seconds: 1717200000
+    }
+    name: "payments"
+    owner_id: "a1946ac92492d2347c6235b4d2611185"
+    visibility: MODULE_VISIBILITY_PUBLIC
+    state: MODULE_STATE_ACTIVE
+    description: "Payments and billing primitives for the Acme platform."
+    default_label_name: "main"
+  }
+  score: 0.95
+}
+estimated_match_count: 1
