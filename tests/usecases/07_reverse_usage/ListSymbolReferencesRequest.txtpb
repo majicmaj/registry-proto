@@ -1,0 +1,12 @@
+# List the Symbols that reference a given Symbol.
+symbol_ref: {
+  resource_ref: {
+    name: {
+      owner: "acme"
+      module: "identity"
+    }
+  }
+  fully_qualified_name: "acme.user.v1.User"
+}
+reference_kinds: REFERENCE_KIND_FIELD_TYPE
+reference_kinds: REFERENCE_KIND_METHOD_OUTPUT

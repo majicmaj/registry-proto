@@ -1,0 +1,23 @@
+# A response listing each referencing Symbol and the kind of reference.
+references: {
+  symbol: {
+    fully_qualified_name: "acme.billing.v1.Invoice.payer"
+    kind: SYMBOL_KIND_FIELD
+    owner: "acme"
+    module: "billing"
+    commit_id: "e4946ac92492d2347c6235b4d2614444"
+    file_path: "acme/billing/v1/invoice.proto"
+  }
+  kind: REFERENCE_KIND_FIELD_TYPE
+}
+references: {
+  symbol: {
+    fully_qualified_name: "acme.user.v1.UserService.GetUser"
+    kind: SYMBOL_KIND_METHOD
+    owner: "acme"
+    module: "identity"
+    commit_id: "f1946ac92492d2347c6235b4d2611111"
+    file_path: "acme/user/v1/user_service.proto"
+  }
+  kind: REFERENCE_KIND_METHOD_OUTPUT
+}

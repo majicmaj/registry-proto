@@ -1,0 +1,4 @@
+# Search for Modules matching a free-text query, filtered by visibility.
+query: "payments"
+visibility: MODULE_VISIBILITY_PUBLIC
+order: ORDER_RELEVANCE_DESC

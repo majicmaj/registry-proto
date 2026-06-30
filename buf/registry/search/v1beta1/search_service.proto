@@ -1,0 +1,244 @@
+// Copyright 2023-2025 Buf Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package buf.registry.search.v1beta1;
+
+import "buf/registry/module/v1/module.proto";
+import "buf/registry/module/v1/resource.proto";
+import "buf/registry/owner/v1/owner.proto";
+import "buf/registry/priv/extension/v1beta1/extension.proto";
+import "buf/registry/search/v1beta1/symbol.proto";
+import "buf/validate/validate.proto";
+
+option go_package = "buf.build/gen/go/bufbuild/registry/protocolbuffers/go/buf/registry/search/v1beta1";
+
+// Search the BSR.
+//
+// Unlike List RPCs, which enumerate resources by exact filters, these RPCs rank results
+// by relevance and are best-effort: match counts are approximate, and ranking may change
+// as content is pushed. All RPCs respect the caller's visibility.
+service SearchService {
+  // Search for Symbols within the schemas of Modules.
+  rpc SearchSymbols(SearchSymbolsRequest) returns (SearchSymbolsResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  // Search for Modules.
+  rpc SearchModules(SearchModulesRequest) returns (SearchModulesResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+  // List the Symbols that reference a given Symbol.
+  //
+  // For example, the fields whose type is the given Symbol, or the methods that take or
+  // return it. Combined with the Module dependency graph, this supports impact analysis.
+  rpc ListSymbolReferences(ListSymbolReferencesRequest) returns (ListSymbolReferencesResponse) {
+    option idempotency_level = NO_SIDE_EFFECTS;
+  }
+}
+
+message SearchSymbolsRequest {
+  // The search order.
+  enum Order {
+    ORDER_UNSPECIFIED = 0;
+    // Order by relevance to the query, most relevant first.
+    ORDER_RELEVANCE_DESC = 1;
+    // Order by fully-qualified name, A to Z.
+    ORDER_NAME_ASC = 2;
+    // Order by fully-qualified name, Z to A.
+    ORDER_NAME_DESC = 3;
+  }
+  // The maximum number of items to return.
+  //
+  // The default value is 10.
+  uint32 page_size = 1 [(buf.validate.field).uint32.lte = 250];
+  // The page to start from.
+  //
+  // If empty, the first page is returned. The token pins the ranking snapshot, so
+  // paginating to completion is stable even as content is pushed.
+  string page_token = 2 [(buf.validate.field).string.max_len = 4096];
+  // The free-text query, matched against Symbol names, packages, and documentation.
+  //
+  // This is the only scored input; the fields below are filters. If empty, results are
+  // filtered and ordered but not scored.
+  string query = 3 [(buf.validate.field).string.max_len = 1024];
+  // The Symbol kinds to return.
+  //
+  // If empty, all kinds are returned.
+  repeated SymbolKind kinds = 4 [(buf.validate.field).repeated.items.enum.defined_only = true];
+  // The Users or Organizations whose Modules to search.
+  //
+  // If empty, all Modules visible to the caller are searched.
+  repeated buf.registry.owner.v1.OwnerRef owner_refs = 5;
+  // The specific Modules, Labels, or Commits to search.
+  //
+  // If a Module or Label is given, its resolved Commit is searched. If empty, all
+  // Modules visible to the caller are searched.
+  repeated buf.registry.module.v1.ResourceRef resource_refs = 6;
+  // The package that returned Symbols must be within, e.g. "acme.pet.v1".
+  string package_prefix = 7 [(buf.validate.field).string.max_len = 512];
+  // If set, return only deprecated (true) or non-deprecated (false) Symbols.
+  optional bool deprecated = 8;
+  // The order to return the Symbols.
+  //
+  // If not specified, defaults to ORDER_RELEVANCE_DESC.
+  Order order = 9 [(buf.validate.field).enum.defined_only = true];
+}
+
+message SearchSymbolsResponse {
+  // The next page token.
+  //
+  // If empty, there are no more pages.
+  string next_page_token = 1 [(buf.validate.field).string.max_len = 4096];
+  // The matched Symbols.
+  repeated SymbolMatch matches = 2;
+  // The approximate number of matches.
+  //
+  // This is an estimate that may be capped, intended for display rather than as an exact
+  // count. Paginate to determine the true count.
+  uint64 estimated_match_count = 3;
+}
+
+// A matched Symbol and its relevance score.
+message SymbolMatch {
+  option (buf.registry.priv.extension.v1beta1.message).response_only = true;
+
+  // The matched Symbol.
+  Symbol symbol = 1 [(buf.validate.field).required = true];
+  // The relevance score, higher being more relevant.
+  //
+  // Only comparable within a single response. Best-effort, for display and re-ranking.
+  double score = 2;
+}
+
+message SearchModulesRequest {
+  // The search order.
+  enum Order {
+    ORDER_UNSPECIFIED = 0;
+    // Order by relevance to the query, most relevant first.
+    ORDER_RELEVANCE_DESC = 1;
+    // Order by name, A to Z.
+    ORDER_NAME_ASC = 2;
+    // Order by name, Z to A.
+    ORDER_NAME_DESC = 3;
+  }
+  // The maximum number of items to return.
+  //
+  // The default value is 10.
+  uint32 page_size = 1 [(buf.validate.field).uint32.lte = 250];
+  // The page to start from.
+  //
+  // If empty, the first page is returned.
+  string page_token = 2 [(buf.validate.field).string.max_len = 4096];
+  // The free-text query, matched against Module names and descriptions.
+  string query = 3 [(buf.validate.field).string.max_len = 1024];
+  // The Users or Organizations whose Modules to search.
+  //
+  // If empty, all Modules visible to the caller are searched.
+  repeated buf.registry.owner.v1.OwnerRef owner_refs = 4;
+  // If set, return only Modules with this visibility.
+  optional buf.registry.module.v1.ModuleVisibility visibility = 5 [
+    (buf.validate.field).enum.defined_only = true,
+    (buf.validate.field).enum.not_in = 0
+  ];
+  // If set, return only deprecated (true) or non-deprecated (false) Modules.
+  optional bool deprecated = 6;
+  // The order to return the Modules.
+  //
+  // If not specified, defaults to ORDER_RELEVANCE_DESC.
+  Order order = 7 [(buf.validate.field).enum.defined_only = true];
+}
+
+message SearchModulesResponse {
+  // The next page token.
+  //
+  // If empty, there are no more pages.
+  string next_page_token = 1 [(buf.validate.field).string.max_len = 4096];
+  // The matched Modules.
+  repeated ModuleMatch matches = 2;
+  // The approximate number of matches.
+  //
+  // This is an estimate that may be capped, intended for display rather than as an exact
+  // count. Paginate to determine the true count.
+  uint64 estimated_match_count = 3;
+}
+
+// A matched Module and its relevance score.
+message ModuleMatch {
+  option (buf.registry.priv.extension.v1beta1.message).response_only = true;
+
+  // The matched Module.
+  buf.registry.module.v1.Module module = 1 [(buf.validate.field).required = true];
+  // The relevance score, higher being more relevant.
+  //
+  // Only comparable within a single response. Best-effort, for display and re-ranking.
+  double score = 2;
+}
+
+// The kind of reference one Symbol makes to another.
+enum ReferenceKind {
+  REFERENCE_KIND_UNSPECIFIED = 0;
+  // A field whose type is the referenced message or enum.
+  REFERENCE_KIND_FIELD_TYPE = 1;
+  // A method whose input type is the referenced message.
+  REFERENCE_KIND_METHOD_INPUT = 2;
+  // A method whose output type is the referenced message.
+  REFERENCE_KIND_METHOD_OUTPUT = 3;
+  // An extension that extends the referenced message.
+  REFERENCE_KIND_EXTENDS = 4;
+}
+
+message ListSymbolReferencesRequest {
+  // The maximum number of items to return.
+  //
+  // The default value is 10.
+  uint32 page_size = 1 [(buf.validate.field).uint32.lte = 250];
+  // The page to start from.
+  //
+  // If empty, the first page is returned.
+  string page_token = 2 [(buf.validate.field).string.max_len = 4096];
+  // The Symbol to find references to.
+  SymbolRef symbol_ref = 3 [(buf.validate.field).required = true];
+  // The kinds of reference to return.
+  //
+  // If empty, all kinds are returned.
+  repeated ReferenceKind reference_kinds = 4 [(buf.validate.field).repeated.items.enum.defined_only = true];
+  // The Users or Organizations whose Modules to search for references.
+  //
+  // References are filtered by the caller's visibility: a reference from a Module the
+  // caller cannot see is never returned.
+  repeated buf.registry.owner.v1.OwnerRef owner_refs = 5;
+}
+
+message ListSymbolReferencesResponse {
+  // The next page token.
+  //
+  // If empty, there are no more pages.
+  string next_page_token = 1 [(buf.validate.field).string.max_len = 4096];
+  // The references to the requested Symbol.
+  repeated SymbolReference references = 2;
+}
+
+// A reference from one Symbol to another.
+message SymbolReference {
+  option (buf.registry.priv.extension.v1beta1.message).response_only = true;
+
+  // The Symbol that makes the reference.
+  Symbol symbol = 1 [(buf.validate.field).required = true];
+  // The kind of reference.
+  ReferenceKind kind = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+}

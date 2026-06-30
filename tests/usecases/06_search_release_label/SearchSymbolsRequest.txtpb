@@ -1,0 +1,9 @@
+# Search within a specific Label of a Module.
+query: "Pet"
+resource_refs: {
+  name: {
+    owner: "acme"
+    module: "petapis"
+    label_name: "v2.1.0"
+  }
+}

@@ -1,0 +1,4 @@
+# Resolve a package by prefix, ordered by name for stable output.
+kinds: SYMBOL_KIND_PACKAGE
+package_prefix: "acme.user.v1"
+order: ORDER_NAME_ASC

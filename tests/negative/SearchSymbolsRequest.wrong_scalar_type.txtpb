@@ -1,0 +1,2 @@
+# page_size must be a uint32.
+page_size: "lots"

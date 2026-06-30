@@ -1,0 +1,129 @@
+// Copyright 2023-2025 Buf Technologies, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package buf.registry.search.v1beta1;
+
+import "buf/registry/module/v1/resource.proto";
+import "buf/registry/priv/extension/v1beta1/extension.proto";
+import "buf/validate/validate.proto";
+
+option go_package = "buf.build/gen/go/bufbuild/registry/protocolbuffers/go/buf/registry/search/v1beta1";
+
+// The kind of a Symbol.
+//
+// With the exception of SYMBOL_KIND_PACKAGE and SYMBOL_KIND_FILE, each kind corresponds
+// to a descriptor within a FileDescriptorSet.
+enum SymbolKind {
+  SYMBOL_KIND_UNSPECIFIED = 0;
+  // A package, e.g. "acme.pet.v1".
+  SYMBOL_KIND_PACKAGE = 1;
+  // A file, e.g. "acme/pet/v1/pet.proto".
+  SYMBOL_KIND_FILE = 2;
+  // A message.
+  SYMBOL_KIND_MESSAGE = 3;
+  // An enum.
+  SYMBOL_KIND_ENUM = 4;
+  // A value of an enum.
+  SYMBOL_KIND_ENUM_VALUE = 5;
+  // A service.
+  SYMBOL_KIND_SERVICE = 6;
+  // A method of a service.
+  SYMBOL_KIND_METHOD = 7;
+  // A field of a message.
+  SYMBOL_KIND_FIELD = 8;
+  // A oneof of a message.
+  SYMBOL_KIND_ONEOF = 9;
+  // An extension.
+  SYMBOL_KIND_EXTENSION = 10;
+}
+
+// A Symbol within the schema of a Commit.
+//
+// A Symbol is an addressable element of a Protobuf schema, such as a message, enum,
+// service, method, or field. It is pinned to the Commit it was found in.
+message Symbol {
+  option (buf.registry.priv.extension.v1beta1.message).response_only = true;
+
+  // The fully-qualified name of the Symbol, e.g. "acme.pet.v1.PetStoreService.GetPet".
+  string fully_qualified_name = 1 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "fqn_no_period_prefix"
+      message: "fully-qualified names should not start with a '.'"
+      expression: "!this.startsWith('.')"
+    }
+  ];
+  // The kind of the Symbol.
+  SymbolKind kind = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).enum.defined_only = true
+  ];
+  // The name of the User or Organization that owns the Module containing the Symbol.
+  string owner = 3 [(buf.validate.field).required = true];
+  // The name of the Module containing the Symbol.
+  string module = 4 [(buf.validate.field).required = true];
+  // The id of the Commit the Symbol was found in.
+  string commit_id = 5 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).string.tuuid = true
+  ];
+  // The name of the Label that resolved to the Commit, if the search was scoped to a
+  // Label.
+  string label_name = 6 [(buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE];
+  // The path of the file that defines the Symbol, e.g. "acme/pet/v1/pet.proto".
+  string file_path = 7 [(buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE];
+  // Whether the Symbol is deprecated.
+  bool deprecated = 8;
+  // How to depend on and import the Symbol from another Module.
+  Usage usage = 9;
+}
+
+// How to depend on and import a Symbol from another Module.
+message Usage {
+  option (buf.registry.priv.extension.v1beta1.message).response_only = true;
+
+  // The dependency to add to a buf.yaml, e.g. "buf.build/acme/petapis".
+  //
+  // Empty if is_well_known_type is true.
+  string dependency = 1 [(buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE];
+  // The import path of the file that defines the Symbol, e.g. "acme/pet/v1/pet.proto".
+  string import_path = 2 [(buf.validate.field).ignore = IGNORE_IF_ZERO_VALUE];
+  // Whether the Symbol is a Well-Known Type, which can be imported without a dependency.
+  bool is_well_known_type = 3;
+}
+
+// A reference to a Symbol.
+//
+// The Symbol is addressed by its fully-qualified name within the Module, Label, or
+// Commit referenced by resource_ref.
+//
+// SymbolRefs can only be used in requests, and only for read-only RPCs.
+message SymbolRef {
+  option (buf.registry.priv.extension.v1beta1.message).request_only = true;
+  option (buf.registry.priv.extension.v1beta1.message).no_side_effects_only = true;
+
+  // The Module, Label, or Commit that contains the Symbol.
+  buf.registry.module.v1.ResourceRef resource_ref = 1 [(buf.validate.field).required = true];
+  // The fully-qualified name of the Symbol.
+  string fully_qualified_name = 2 [
+    (buf.validate.field).required = true,
+    (buf.validate.field).cel = {
+      id: "fqn_no_period_prefix"
+      message: "fully-qualified names should not start with a '.'"
+      expression: "!this.startsWith('.')"
+    }
+  ];
+}

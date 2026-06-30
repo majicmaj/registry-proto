@@ -1,0 +1,26 @@
+# A response ranking the matching Symbols, each with its full coordinate.
+matches: {
+  symbol: {
+    fully_qualified_name: "acme.user.v1.User"
+    kind: SYMBOL_KIND_MESSAGE
+    owner: "acme"
+    module: "identity"
+    commit_id: "f1946ac92492d2347c6235b4d2611111"
+    label_name: "main"
+    file_path: "acme/user/v1/user.proto"
+  }
+  score: 0.98
+}
+matches: {
+  symbol: {
+    fully_qualified_name: "acme.user.v1.UserService"
+    kind: SYMBOL_KIND_SERVICE
+    owner: "acme"
+    module: "identity"
+    commit_id: "f1946ac92492d2347c6235b4d2611111"
+    label_name: "main"
+    file_path: "acme/user/v1/user_service.proto"
+  }
+  score: 0.91
+}
+estimated_match_count: 2
