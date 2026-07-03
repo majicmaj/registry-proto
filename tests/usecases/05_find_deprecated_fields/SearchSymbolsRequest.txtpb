@@ -1,0 +1,4 @@
+# Search for deprecated fields owned by a given Organization.
+kinds: SYMBOL_KIND_FIELD
+deprecated: true
+owner_refs: { name: "acme" }

@@ -1,0 +1,14 @@
+# A response whose Symbol includes the dependency and import path needed to use it.
+matches: {
+  symbol: {
+    fully_qualified_name: "google.type.Money"
+    kind: SYMBOL_KIND_MESSAGE
+    owner: "googleapis"
+    module: "googleapis"
+    commit_id: "c2946ac92492d2347c6235b4d2612222"
+    file_path: "google/type/money.proto"
+    dependency: "buf.build/googleapis/googleapis"
+  }
+  score: 0.99
+}
+estimated_match_count: 1

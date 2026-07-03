@@ -1,0 +1,2 @@
+# symbol_ref must be a message.
+symbol_ref: "acme.user.v1.User"

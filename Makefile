@@ -38,6 +38,10 @@ lint: $(BIN)/buf ## Lint all APIs
 	buf lint
 	buf format -d --exit-code
 
+.PHONY: test
+test: $(BIN)/buf ## Validate the example fixtures under tests/ against the compiled schema
+	bash tests/run.sh
+
 .PHONY: upgrade
 upgrade: $(BIN)/buf ## Upgrade dependencies
 	buf dep update

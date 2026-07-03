@@ -14,4 +14,5 @@ jobs:
           # No caching needed; no Go files.
           cache: false
       - run: make
+      - run: make test
       - run: make checkgenerate

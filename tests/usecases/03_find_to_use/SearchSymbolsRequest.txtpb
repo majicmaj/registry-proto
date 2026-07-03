@@ -1,0 +1,3 @@
+# Search for a message by name.
+query: "Money"
+kinds: SYMBOL_KIND_MESSAGE

@@ -1,0 +1,14 @@
+# A response for a Well-Known Type, which has no dependency because it can be imported
+# directly.
+matches: {
+  symbol: {
+    fully_qualified_name: "google.protobuf.Timestamp"
+    kind: SYMBOL_KIND_MESSAGE
+    owner: "protocolbuffers"
+    module: "wellknowntypes"
+    commit_id: "d3946ac92492d2347c6235b4d2613333"
+    file_path: "google/protobuf/timestamp.proto"
+  }
+  score: 1.0
+}
+estimated_match_count: 1
